@@ -1,7 +1,14 @@
-#include <stdio.h>
+#define LIBAKRYPT_HAVE_SYSTYPES_H
+
+#include <sys/types.h>
+
+#include <libakrypt.h>
+#include <ak_curves.h>
+#include <ak_parameters.h>
+
 
 int main()
 {
-    printf("Hello World!\n");
+
     return 0;
 }
