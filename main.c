@@ -7,34 +7,32 @@
 #include <ak_parameters.h>
 #include <ak_mpzn.h>
 
+#include "montgomery_curve.h"
 
 int main()
 {
-//Need to do montgomoery representation
-/*  a = "C2173F1513981673AF4892C23035A27CE25E2013BF95AA33B22C656F277E7335"
-    b = "295F9BAE7428ED9CCC20E7C359A9D41A22FCCD9108E17BF7BA9337A6F8AE9513"
-    p = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFD97"
-    q = "400000000000000000000000000000000FD8CDDFC87B6635C115AF556C360C67"
-    px = "91E38443A5E82C0D880923425712B2BB658B9196932E02C78B2582FE742DAA28"
-    py = "32879423AB1A0375895786C4BB46E9565FDE0B5344766740AF268ADB32322E5C"
-    A = "abcd6ab42cf78bd83f256ae2e7089e30f31637086d4e41fd4ecf952f2b6c6e86"
-    B = "abcd6ab42cf78bd83f256ae2e7089e30f31637086d4e41fd4ecf952f2b6c6e88"
-    alpha = "100fe73f595ff158e974b44d478d9588744fe5c192ac47ea63075dce7a14aaa"
-    s = "abcd6ab42cf78bd83f256ae2e7089e30f31637086d4e41fd4ecf952f2b6c6e88"
-    alphas = "394478e6b9a7d948150c78f64d02df65a65cbd02cf1a15ff1a4531ba63cecf82"
-    malphas = "c6bb8719465826b7eaf38709b2fd209a59a342fd30e5ea00e5bace459c312e15"
-    Binv = "7e7e82520f9f015faa1d0f18c14ab9fb35188275da3fd94206b74f34a48e0ecd"
-    A3B = "100fe73f595ff158e974b44d478d9588744fe5c192ac47ea63075dce7a14aaa"
-    pxm = "cbb8f5ebd80486b923ebfb17e5464173144cac7b0447717b0ea8de20545a6a23"
-    pym = "370e3a4d38005921ef122701d68f401c8b685c09767ba6448af94c29df1aa555"
-*/
-    ak_uint64 a [ak_mpzn256_size] = {0XB22C656F277E7335, 0XE25E2013BF95AA33, 0XAF4892C23035A27C, 0XC2173F1513981673};
+
+    ak_mcurve mc = &wtomutils256;
+    ak_wcurve wc = &id_tc26_gost_3410_2012_256_paramSetA;
+
+    struct wpoint point_, point2_;
+    ak_wpoint point = &point_, point2 = &point2_;
+
+    ak_wpoint_set(point, wc); //right
+    ak_wpoint_set(point2, wc);
 
 
-    ak_mpzn_mul_montgomery(a, a, id_tc26_gost_3410_2012_256_paramSetA.r2,
-                           id_tc26_gost_3410_2012_256_paramSetA.p, id_tc26_gost_3410_2012_256_paramSetA.n,
-                           id_tc26_gost_3410_2012_256_paramSetA.size);
+    ak_wpoint_wmw(point2, wc, mc);
 
+    ak_wpoint_double_montgomery(point2, wc, mc);
+    ak_wpoint_double(point, wc);
+
+    ak_wpoint_reduce(point2, wc);
+    ak_wpoint_reduce(point, wc);
+
+
+    //ak_uint64 A24[ak_mpzn256_size] = {0x53b3e54bcadb1ba2, 0x3cc58dc21b53907f, 0x0fc95ab8b9c2278c, 0x2af35aad0b3de2f6};
+    //ak_
 
     return 0;
 }
