@@ -12,8 +12,10 @@ struct wtomutils
     ak_uint64 A[ak_mpzn512_size];
     ak_uint64 B[ak_mpzn512_size];
     ak_uint64 Binv[ak_mpzn512_size];
-    ak_uint64 malphaB[ak_mpzn512_size]; //w -> m x -> x*B + malphas
+    ak_uint64 malphaB[ak_mpzn512_size];//w -> m x -> x*B + malphas
+    ak_uint64 malphaBR[ak_mpzn512_size];//montgomery
     ak_uint64 alpha[ak_mpzn512_size];
+    ak_uint64 alphaR[ak_mpzn512_size];//montgomery
     ak_uint64 A24[ak_mpzn512_size];
 };
 
@@ -39,10 +41,13 @@ static struct wtomutils wtomutils256 = {
 {0xf24e8eafa85a4b96, 0xe08aa34f719d0b82, 0x312e9cded3c543f9, 0x12162c4060a00c30},//B (montgomery representation)
 {0x2fcde5e09a6488c5, 0xf8126e0b03e2a022, 0x962a9dd1a3e72,    0xdee817c7a63a4f91},//Binv (montgomery representation)
 {0xe5bace459c312e15, 0x59a342fd30e5ea00, 0xeaf38709b2fd209a, 0xc6bb8719465826b7},//malphaB
+{0xaf3b25c5728c90ab, 0xa7c743ada20fc29,  0x44f0766064139402, 0xf9f89bea8a755145},//malphaBR(montgomery representation)
 {0xa63075dce7a14aaa, 0x8744fe5c192ac47e, 0x8e974b44d478d958, 0x0100fe73f595ff15},//alpha
-{0xbc93a3abea1691b1, 0x7822a8d3dc6742e0, 0xc4ba737b4f150fe,  0x84858b101828030c}//A24(montgomery representation)
+{0x8acc116a43bcf88c, 0x5490bf8a813953e,  0xaaa468e41743d65e, 0x6b65457ae683caf4},//alphaR(montgomery representation)
+{0xbc93a3abea1691b1, 0x7822a8d3dc6742e0, 0xc4ba737b4f150fe,  0x84858b101828030c},//A24(montgomery representation)
 };
 
-void ak_wpoint_wmw(ak_wpoint p, ak_wcurve ec, ak_mcurve mc);
+void ak_wpoint_w_to_m(ak_wpoint p, ak_wcurve ec, ak_mcurve mc);
+void ak_wpoint_m_to_w(ak_wpoint p, ak_wcurve ec, ak_mcurve mc);
 void ak_wpoint_double_montgomery(ak_wpoint p, ak_wcurve ec, ak_mcurve mc);
 #endif // MONTGOMERY_CURVE_H
