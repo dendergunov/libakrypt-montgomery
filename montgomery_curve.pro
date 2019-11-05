@@ -15,4 +15,6 @@ DEPENDPATH += $$PWD/../../../../usr/local/include
 unix:!macx: PRE_TARGETDEPS += $$PWD/../../../../usr/local/lib/libakrypt-static.a
 
 HEADERS += \
+    ak_curves.h \
+    ak_parameters.h \
     montgomery_curve.h
