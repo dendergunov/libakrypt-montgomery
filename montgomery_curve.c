@@ -229,7 +229,7 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
     struct wpoint point_;
     ak_wpoint point = &point_;
 
-    ak_wpoint_set_wpoint(point, p, ec);
+    ak_wpoint_set_wpoint(point, p, ec); //copy y-coordinate to add funcionality with y-coordinate of kP recovery
     ak_wpoint_to_mpoint(point, ec);
 
     struct wpoint left_, right_;
@@ -284,6 +284,63 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
     for( ; j < 64; ++j){ //computing in same long long
 
         if( uk&0x8000000000000000LL ){ //1: left -> add, right -> double
+            left = &left_;
+            right = &right_;
+        } else { //0: left -> double, right-> add
+            left = &right_;
+            right = &left_;
+        }
+
+        ak_mpzn_add_montgomery(A, right->x, right->z, ec->p, ec->size);
+        ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
+
+        ak_mpzn_sub(B, ec->p, right->z, ec->size);
+        ak_mpzn_add_montgomery(B, B, right->x, ec->p, ec->size);
+        ak_mpzn_mul_montgomery(BB, B, B, ec->p, ec->n, ec->size);
+
+        ak_mpzn_sub(E, ec->p, BB, ec->size);
+        ak_mpzn_add_montgomery(E, AA, E, ec->p, ec->size);
+
+        ak_mpzn_add_montgomery(C, left->x, left->z, ec->p, ec->size);
+
+        ak_mpzn_sub(D, ec->p, left->z, ec->size);
+        ak_mpzn_add_montgomery(D, left->x, D, ec->p, ec->size);
+
+        ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
+        ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
+
+        ak_mpzn_mul_montgomery(right->x, AA, BB, ec->p, ec->n, ec->size);
+
+        ak_mpzn_mul_montgomery(right->z, E, ec->mc->a24, ec->p, ec->n, ec->size);
+        ak_mpzn_add_montgomery(right->z, right->z, BB, ec->p, ec->size);
+        ak_mpzn_mul_montgomery(right->z, right->z, E, ec->p, ec->n, ec->size);
+
+
+        ak_mpzn_add_montgomery(left->x, DA, CB, ec->p, ec->size);
+        ak_mpzn_mul_montgomery(left->x, left->x, left->x, ec->p, ec->n, ec->size);
+        ak_mpzn_mul_montgomery(left->x, left->x, point->z, ec->p, ec->n, ec->size);
+
+        ak_mpzn_sub(left->z, ec->p, CB, ec->size);
+        ak_mpzn_add_montgomery(left->z, left->z, DA, ec->p, ec->size);
+        ak_mpzn_mul_montgomery(left->z, left->z, left->z, ec->p, ec->n, ec->size);
+        ak_mpzn_mul_montgomery(left->z, left->z, point->x, ec->p, ec->n, ec->size);
+
+        uk<<=1;
+
+    }
+
+    //rest of long longs
+    --first_ll_with_one;
+    for(i = first_ll_with_one; i >= 0; --i){
+        uk = k[i];
+        for(j = 0; j < 64; ++j){
+            if( uk&0x8000000000000000LL ){ //1: left -> add, right -> double
+                left = &left_;
+                right = &right_;
+            } else { //0: left -> double, right-> add
+                left = &right_;
+                right = &left_;
+            }
 
             ak_mpzn_add_montgomery(A, right->x, right->z, ec->p, ec->size);
             ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
@@ -319,131 +376,17 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
             ak_mpzn_mul_montgomery(left->z, left->z, left->z, ec->p, ec->n, ec->size);
             ak_mpzn_mul_montgomery(left->z, left->z, point->x, ec->p, ec->n, ec->size);
 
-
-        } else { //0: left -> double, right-> add
-            ak_mpzn_add_montgomery(A, left->x, left->z, ec->p, ec->size);
-            ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
-
-            ak_mpzn_sub(B, ec->p, left->z, ec->size);
-            ak_mpzn_add_montgomery(B, B, left->x, ec->p, ec->size);
-            ak_mpzn_mul_montgomery(BB, B, B, ec->p, ec->n, ec->size);
-
-            ak_mpzn_sub(E, ec->p, BB, ec->size);
-            ak_mpzn_add_montgomery(E, AA, E, ec->p, ec->size);
-
-            ak_mpzn_add_montgomery(C, right->x, right->z, ec->p, ec->size);
-
-            ak_mpzn_sub(D, ec->p, right->z, ec->size);
-            ak_mpzn_add_montgomery(D, right->x, D, ec->p, ec->size);
-
-            ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
-            ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
-
-            ak_mpzn_mul_montgomery(left->x, AA, BB, ec->p, ec->n, ec->size);
-
-            ak_mpzn_mul_montgomery(left->z, E, ec->mc->a24, ec->p, ec->n, ec->size);
-            ak_mpzn_add_montgomery(left->z, left->z, BB, ec->p, ec->size);
-            ak_mpzn_mul_montgomery(left->z, left->z, E, ec->p, ec->n, ec->size); //left now contains 2*left
-
-            ak_mpzn_add_montgomery(right->x, DA, CB, ec->p, ec->size);
-            ak_mpzn_mul_montgomery(right->x, right->x, right->x, ec->p, ec->n, ec->size);
-            ak_mpzn_mul_montgomery(right->x, point->z, right->x, ec->p, ec->n, ec->size);
-
-            ak_mpzn_sub(right->z, ec->p, CB, ec->size);
-            ak_mpzn_add_montgomery(right->z, DA, right->z, ec->p, ec->size);
-            ak_mpzn_mul_montgomery(right->z, right->z, right->z, ec->p, ec->n, ec->size);
-            ak_mpzn_mul_montgomery(right->z, point->x, right->z, ec->p, ec->n, ec->size); //right now conatins 2*right
-
-        }
-
-        uk<<=1;
-
-    }
-
-    --first_ll_with_one;
-
-    for(i = first_ll_with_one; i >= 0; --i){
-        uk = k[i];
-        for(j = 0; j < 64; ++j){
-            if( uk&0x8000000000000000LL ){ //1: left -> add, right -> double
-
-                ak_mpzn_add_montgomery(A, right->x, right->z, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(B, ec->p, right->z, ec->size);
-                ak_mpzn_add_montgomery(B, B, right->x, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(BB, B, B, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(E, ec->p, BB, ec->size);
-                ak_mpzn_add_montgomery(E, AA, E, ec->p, ec->size);
-
-                ak_mpzn_add_montgomery(C, left->x, left->z, ec->p, ec->size);
-
-                ak_mpzn_sub(D, ec->p, left->z, ec->size);
-                ak_mpzn_add_montgomery(D, left->x, D, ec->p, ec->size);
-
-                ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
-
-                ak_mpzn_mul_montgomery(right->x, AA, BB, ec->p, ec->n, ec->size);
-
-                ak_mpzn_mul_montgomery(right->z, E, ec->mc->a24, ec->p, ec->n, ec->size);
-                ak_mpzn_add_montgomery(right->z, right->z, BB, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(right->z, right->z, E, ec->p, ec->n, ec->size);
-
-
-                ak_mpzn_add_montgomery(left->x, DA, CB, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(left->x, left->x, left->x, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(left->x, left->x, point->z, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(left->z, ec->p, CB, ec->size);
-                ak_mpzn_add_montgomery(left->z, left->z, DA, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(left->z, left->z, left->z, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(left->z, left->z, point->x, ec->p, ec->n, ec->size);
-
-
-            } else { //0: left -> double, right-> add
-                ak_mpzn_add_montgomery(A, left->x, left->z, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(B, ec->p, left->z, ec->size);
-                ak_mpzn_add_montgomery(B, B, left->x, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(BB, B, B, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(E, ec->p, BB, ec->size);
-                ak_mpzn_add_montgomery(E, AA, E, ec->p, ec->size);
-
-                ak_mpzn_add_montgomery(C, right->x, right->z, ec->p, ec->size);
-
-                ak_mpzn_sub(D, ec->p, right->z, ec->size);
-                ak_mpzn_add_montgomery(D, right->x, D, ec->p, ec->size);
-
-                ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
-
-                ak_mpzn_mul_montgomery(left->x, AA, BB, ec->p, ec->n, ec->size);
-
-                ak_mpzn_mul_montgomery(left->z, E, ec->mc->a24, ec->p, ec->n, ec->size);
-                ak_mpzn_add_montgomery(left->z, left->z, BB, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(left->z, left->z, E, ec->p, ec->n, ec->size); //left now contains 2*left
-
-                ak_mpzn_add_montgomery(right->x, DA, CB, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(right->x, right->x, right->x, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(right->x, point->z, right->x, ec->p, ec->n, ec->size);
-
-                ak_mpzn_sub(right->z, ec->p, CB, ec->size);
-                ak_mpzn_add_montgomery(right->z, DA, right->z, ec->p, ec->size);
-                ak_mpzn_mul_montgomery(right->z, right->z, right->z, ec->p, ec->n, ec->size);
-                ak_mpzn_mul_montgomery(right->z, point->x, right->z, ec->p, ec->n, ec->size); //right now conatins 2*right
-
-            }
-
             uk<<=1;
         }
     }
 
+    left = &left_;
+    right = &right_;
+
     memcpy(q->x, left->x, ec->size*sizeof( ak_uint64));
     memcpy(q->z, left->z, ec->size*sizeof( ak_uint64));
+
+    //TODO: add some extension to y-coordinate recovery
 
     //switch back to weierstrass
     ak_mpoint_to_wpoint(q, ec);

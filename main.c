@@ -48,6 +48,7 @@ int main()
     ak_wpoint_reduce(minf, wc);
 
     printf("%f %f\n", weir_time, mont_time);
+    printf("x-coord: %d\n", ak_mpzn_cmp(point2->x, minf->x, wc->size));
 
     for(int i = 1; i < 100; ++i){
         ak_mpzn_set_ui(k, wc->size, i);
