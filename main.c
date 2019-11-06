@@ -17,20 +17,24 @@ int main()
 
     ak_wcurve wc = &id_tc26_gost_3410_2012_256_paramSetA;
 
-    struct wpoint point_, point2_;
-    ak_wpoint point = &point_, point2 = &point2_;
+    struct wpoint point_, point2_, minf_;
+    ak_wpoint point = &point_, point2 = &point2_, minf = &minf_;
 
     ak_wpoint_set(point, wc); //right
     ak_wpoint_set(point2, wc);
+    ak_wpoint_set(minf, wc);
 
+    ak_wpoint_to_mpoint(point, wc);
     ak_wpoint_to_mpoint(point2, wc);
-    ak_mpoint_to_wpoint(point2, wc);
+    ak_wpoint_to_mpoint(minf, wc);
 
-    ak_wpoint_double(point, wc);
+    ak_mpoint_double(minf, wc);
+
+    ak_mpoint_dadd(point, point, minf, wc);
+
+    ak_mpoint_to_wpoint(point, wc);
     ak_wpoint_reduce(point, wc);
 
-    ak_wpoint_double_montgomery(point2, wc);
-    ak_wpoint_reduce(point2, wc);
 
     return 0;
 }
