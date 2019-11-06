@@ -22,4 +22,5 @@ void ak_mpoint_dadd(ak_wpoint p, ak_wpoint q, ak_wpoint pmq, ak_wcurve ec); //wo
 void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t size, ak_wcurve ec);
 
 
+
 #endif // MONTGOMERY_CURVE_H
