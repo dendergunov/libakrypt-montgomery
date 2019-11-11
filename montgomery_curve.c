@@ -1,6 +1,5 @@
 #define LIBAKRYPT_HAVE_SYSTYPES_H
 
-
 #include "montgomery_curve.h"
 #include "ak_curves.h"
 
@@ -281,59 +280,8 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
 
     //let's compute the rest
     //cycle to compute both double and differential addition
-    for( ; j < 64; ++j){ //computing in same long long
-
-        if( uk&0x8000000000000000LL ){ //1: left -> add, right -> double
-            left = &left_;
-            right = &right_;
-        } else { //0: left -> double, right-> add
-            left = &right_;
-            right = &left_;
-        }
-
-        ak_mpzn_add_montgomery(A, right->x, right->z, ec->p, ec->size);
-        ak_mpzn_mul_montgomery(AA, A, A, ec->p, ec->n, ec->size);
-
-        ak_mpzn_sub(B, ec->p, right->z, ec->size);
-        ak_mpzn_add_montgomery(B, B, right->x, ec->p, ec->size);
-        ak_mpzn_mul_montgomery(BB, B, B, ec->p, ec->n, ec->size);
-
-        ak_mpzn_sub(E, ec->p, BB, ec->size);
-        ak_mpzn_add_montgomery(E, AA, E, ec->p, ec->size);
-
-        ak_mpzn_add_montgomery(C, left->x, left->z, ec->p, ec->size);
-
-        ak_mpzn_sub(D, ec->p, left->z, ec->size);
-        ak_mpzn_add_montgomery(D, left->x, D, ec->p, ec->size);
-
-        ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
-        ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
-
-        ak_mpzn_mul_montgomery(right->x, AA, BB, ec->p, ec->n, ec->size);
-
-        ak_mpzn_mul_montgomery(right->z, E, ec->mc->a24, ec->p, ec->n, ec->size);
-        ak_mpzn_add_montgomery(right->z, right->z, BB, ec->p, ec->size);
-        ak_mpzn_mul_montgomery(right->z, right->z, E, ec->p, ec->n, ec->size);
-
-
-        ak_mpzn_add_montgomery(left->x, DA, CB, ec->p, ec->size);
-        ak_mpzn_mul_montgomery(left->x, left->x, left->x, ec->p, ec->n, ec->size);
-        ak_mpzn_mul_montgomery(left->x, left->x, point->z, ec->p, ec->n, ec->size);
-
-        ak_mpzn_sub(left->z, ec->p, CB, ec->size);
-        ak_mpzn_add_montgomery(left->z, left->z, DA, ec->p, ec->size);
-        ak_mpzn_mul_montgomery(left->z, left->z, left->z, ec->p, ec->n, ec->size);
-        ak_mpzn_mul_montgomery(left->z, left->z, point->x, ec->p, ec->n, ec->size);
-
-        uk<<=1;
-
-    }
-
-    //rest of long longs
-    --first_ll_with_one;
-    for(i = first_ll_with_one; i >= 0; --i){
-        uk = k[i];
-        for(j = 0; j < 64; ++j){
+    for( i = first_ll_with_one; i >= 0; --i, j = 0, uk=k[i] ){
+        for( ; j < 64; ++j, uk<<=1 ){
             if( uk&0x8000000000000000LL ){ //1: left -> add, right -> double
                 left = &left_;
                 right = &right_;
@@ -376,15 +324,14 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
             ak_mpzn_mul_montgomery(left->z, left->z, left->z, ec->p, ec->n, ec->size);
             ak_mpzn_mul_montgomery(left->z, left->z, point->x, ec->p, ec->n, ec->size);
 
-            uk<<=1;
         }
     }
 
     left = &left_;
     right = &right_;
 
-    memcpy(q->x, left->x, ec->size*sizeof( ak_uint64));
-    memcpy(q->z, left->z, ec->size*sizeof( ak_uint64));
+    memcpy(q->x, left->x, ec->size*sizeof( ak_uint64 ));
+    memcpy(q->z, left->z, ec->size*sizeof( ak_uint64 ));
 
     //TODO: add some extension to y-coordinate recovery
 

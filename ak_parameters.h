@@ -1247,7 +1247,24 @@
  {0xbc93a3abea1691b1, 0x7822a8d3dc6742e0, 0xc4ba737b4f150fe,  0x84858b101828030c},//A24(montgomery representation)
  };
 
-
+const static struct mutils id_tc26_gost_3410_2012_512_paramSetC_mutils = {
+{0x11759102490e8123, 0x2a978c7594414427, 0xa54de060fbd1f45b, 0x259a1d712a9c56dc,
+ 0xa6d171ee57f17833, 0x09c2c03082ca0287, 0x7c768337f711e3d2, 0x2c1be1949124f5fa},//A (montgomery representation)
+{0x11759102490e8595, 0x2a978c7594414427, 0xa54de060fbd1f45b, 0x259a1d712a9c56dc,
+ 0xa6d171ee57f17833, 0x09c2c03082ca0287, 0x7c768337f711e3d2, 0x2c1be1949124f5fa},//B (montgomery representation)
+{0xa6ba96ba64be8cb4, 0x94648e0af196370a, 0x88f8e2c48c562663, 0x5eb16ec44a9d4706,
+ 0xcdece1826f666e34, 0x9796d004ccbcc2af, 0x551d986ce321f157, 0x486644f42bfc0e5b},//Binv (montgomery representation)
+{0xc1c07e5721b3592f, 0xf879fcc4b1541867, 0x78c790bd8193bf84, 0x3c1dc0febbe369fa,
+ 0x2dcb166dc9f582b4, 0x1030ed241d5150d5, 0x352aac16e9a8db46, 0xeeba3f4e329ae5e9},//malphaB
+{0xa4d8cfa9e7a5d379, 0x4722d12e23ea3e9d, 0x7390b5350164ae8c, 0x9e21f62f9c768db6,
+ 0xc864da05e2af8299, 0xfcbf154529bca9d2, 0x2bd87eed584f5eb9, 0x9bf6b4ce7a490357},//malphaBR(montgomery representation)
+{0x21b2b249ddfd1271, 0x6d9acd4b1f5c5b1e, 0xd625cd0b5145091a, 0xc6734501b83a011d,
+ 0xfa5c1abb02b80b44, 0x9c8ab238aeed0851, 0xd89ba28a2539ffb7, 0x9a628f975594ecef},//alpha
+{0xe62e462e6780f788, 0x9d124bf8b44685f8, 0xfa04be27a2713bbd, 0x163460d278ec7b50,
+ 0x76b769a90b110bdd, 0xf0461ffcccd77e35, 0x71ec450cbde95f1a, 0x2511275d3802a118},//alphaR(montgomery representation)
+{0xc45d64409243a0d7, 0xcaa5e31d65105109, 0x295378183ef47d16, 0xc966875c4aa715b7,
+ 0xe9b45c7b95fc5e0c, 0x8270b00c20b280a1, 0x9f1da0cdfdc478f4, 0x4b06f86524493d7e}//A24(montgomery represenation)
+};
 
  /*! \brief Параметры 256-ти битной эллиптической кривой из тестового примера ГОСТ Р 34.10-2012 (Приложение А.1). */
 /*! \code
@@ -1527,7 +1544,7 @@
   0x58a1f7e6ce0f4c09LL, /* n */
   0x0ed9d8e0b6624e1bLL, /* nq */
   "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDC7",
-    NULL
+    &id_tc26_gost_3410_2012_512_paramSetC_mutils
  };
 
 #endif
