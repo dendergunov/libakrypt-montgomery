@@ -8,20 +8,22 @@
 
 int ak_wpoint_to_mpoint(ak_wpoint wp, ak_wcurve ec)
 {
-    if( wp == NULL) ak_error_message( ak_error_null_pointer, __func__,
+    if( wp == NULL){
+        ak_error_message( ak_error_null_pointer, __func__,
                                       "using null pointer to elliptic curve point");
+        return ak_false;
+    }
 
-    if( ec->mc == NULL) ak_error_message( ak_error_null_pointer, __func__,
-                                          "elliptic curve does not have Montgomery alternative");
     if( ec->mc == NULL){
         ak_error_message( ak_error_null_pointer, __func__,
                                           "elliptic curve does not have Montgomery alternative");
-        return ak_error_wrong_option;
+        return ak_false;
     }
+
     //check for infinity point
     if( ak_mpzn_cmp_ui(wp->z, ec->size, 0) == ak_true){
         ak_mpzn_set_ui(wp->x, ec->size, 1);
-        return ak_error_ok;
+        return ak_true;
     }
 
     //x-coordinate
@@ -34,24 +36,27 @@ int ak_wpoint_to_mpoint(ak_wpoint wp, ak_wcurve ec)
     //y-coordinate
     ak_mpzn_mul_montgomery(wp->y, wp->y, ec->mc->b, ec->p, ec->n, ec->size);
 
-    return ak_error_ok;
+    return ak_true;
 }
 
 int ak_mpoint_to_wpoint(ak_wpoint mp, ak_wcurve ec)
 {
-    if( mp == NULL) ak_error_message( ak_error_null_pointer, __func__,
+    if( mp == NULL){
+        ak_error_message( ak_error_null_pointer, __func__,
                                       "using null pointer to elliptic curve point");
+        return ak_false;
+    }
 
     if( ec->mc == NULL){
         ak_error_message( ak_error_null_pointer, __func__,
                                           "elliptic curve does not have Montgomery alternative");
-        return ak_error_wrong_option;
+        return ak_false;
     }
 
     //check for infinity point
     if (ak_mpzn_cmp_ui(mp->z, ec->size, 0) == ak_true){
         ak_mpzn_set_ui(mp->x, ec->size, 0);
-        return ak_error_ok;
+        return ak_true;
     }
 
     //x-coordinate
@@ -64,24 +69,27 @@ int ak_mpoint_to_wpoint(ak_wpoint mp, ak_wcurve ec)
     //y-coordinate
     ak_mpzn_mul_montgomery(mp->y, mp->y, ec->mc->b_inv, ec->p, ec->n, ec->size);
 
-    return ak_error_ok;
+    return ak_true;
 }
 
 int ak_mpoint_set_as_unit(ak_wpoint mp, ak_wcurve ec)
 {
-    if( mp == NULL) ak_error_message( ak_error_null_pointer, __func__,
+    if( mp == NULL){
+        ak_error_message( ak_error_null_pointer, __func__,
                                       "using null pointer to elliptic curve point");
+        return ak_false;
+    }
 
     if( ec->mc == NULL){
         ak_error_message( ak_error_null_pointer, __func__,
                                           "elliptic curve does not have Montgomery alternative");
-        return ak_error_wrong_option;
+        return ak_false;
     }
 
     ak_mpzn_set_ui(mp->x, ec->size, 1);
     ak_mpzn_set_ui(mp->z, ec->size, 0);
 
-    return ak_error_ok;
+    return ak_true;
 }
 
 void ak_wpoint_double_montgomery(ak_wpoint wp, ak_wcurve ec)
@@ -129,6 +137,7 @@ void ak_wpoint_double_montgomery(ak_wpoint wp, ak_wcurve ec)
     ak_mpzn_mul_montgomery(m_alpha_b, wp->z, ec->mc->alpha_r, ec->p, ec->n, ec->size);
     ak_mpzn_add_montgomery(wp->x, wp->x, m_alpha_b, ec->p, ec->size);
     //now wpoint contains (2P.x, P.y, 2P.z) (it's suitable only to check x-coordinates
+
 }
 
 void ak_mpoint_double(ak_wpoint mp, ak_wcurve ec)
@@ -178,14 +187,14 @@ void ak_mpoint_dadd(ak_wpoint p, ak_wpoint q, ak_wpoint pmq, ak_wcurve ec)
 
     ak_mpzn512 A, B, C, D, DA, CB;
 
-    ak_mpzn_add_montgomery(A, p->x, p->z, ec->p, ec->size); //X1 + Z1
+    ak_mpzn_add_montgomery(A, p->x, p->z, ec->p, ec->size);
 
     ak_mpzn_sub(B, ec->p, p->z, ec->size);
-    ak_mpzn_add_montgomery(B, B, p->x, ec->p, ec->size); //X1 - Z1
+    ak_mpzn_add_montgomery(B, B, p->x, ec->p, ec->size);
 
-    ak_mpzn_add_montgomery(C, q->x, q->z, ec->p, ec->size); //X2 + Z2
+    ak_mpzn_add_montgomery(C, q->x, q->z, ec->p, ec->size);
     ak_mpzn_sub(D, ec->p, q->z, ec->size);
-    ak_mpzn_add_montgomery(D, D, q->x, ec->p, ec->size); //X2 - Z2
+    ak_mpzn_add_montgomery(D, D, q->x, ec->p, ec->size);
 
     ak_mpzn_mul_montgomery(DA, D, A, ec->p, ec->n, ec->size);
     ak_mpzn_mul_montgomery(CB, C, B, ec->p, ec->n, ec->size);
@@ -228,7 +237,7 @@ void ak_wpoint_pow_montgomery_x(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t s
     struct wpoint point_;
     ak_wpoint point = &point_;
 
-    ak_wpoint_set_wpoint(point, p, ec); //copy y-coordinate to add funcionality with y-coordinate of kP recovery
+    ak_wpoint_set_wpoint(point, p, ec);
     ak_wpoint_to_mpoint(point, ec);
 
     struct wpoint left_, right_;
@@ -333,10 +342,6 @@ void ak_wpoint_pow_montgomery_x(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t s
     memcpy(q->x, left->x, ec->size*sizeof( ak_uint64 ));
     memcpy(q->z, left->z, ec->size*sizeof( ak_uint64 ));
 
-    //TODO: add some extension to y-coordinate recovery
-
-
-
     //switch back to weierstrass
     ak_mpoint_to_wpoint(q, ec);
 
@@ -344,12 +349,9 @@ void ak_wpoint_pow_montgomery_x(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t s
 
 void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t size, ak_wcurve ec)
 {
-    //prereuesites: ak_wpoint p should contain (x, y, 1)
-    //(such used in signature)
     //check for errors and unnecessary calculations
     if( ec->mc == NULL){
-        ak_error_message( ak_error_null_pointer, __func__,
-                                          "elliptic curve does not have Montgomery alternative");
+        ak_wpoint_pow(q, p, k, size, ec);
         return;
     }
 
@@ -469,7 +471,6 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
     left = &left_;
     right = &right_;
 
-    //TODO: add some extension to y-coordinate recovery
     //let point contain (x*R, y*R, 1)
     ak_mpzn_mul_montgomery(point->x, point->x, ec->r2, ec->p, ec->n, ec->size);
     ak_mpzn_mul_montgomery(point->y, point->y, ec->r2, ec->p, ec->n, ec->size);
@@ -523,4 +524,3 @@ void ak_wpoint_pow_montgomery(ak_wpoint q, ak_wpoint p, ak_uint64* k, size_t siz
     //switch back to weierstrass
     ak_mpoint_to_wpoint(q, ec);
 }
-
