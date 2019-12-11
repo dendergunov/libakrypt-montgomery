@@ -1276,7 +1276,7 @@ const static struct mutils id_tc26_gost_3410_2012_512_paramSetC_mutils = {
      py = "8E2A8A0E65147D4BD6316030E16D19C85C97F0A9CA267122B96ABBCEA7E8FC8"
     \endcode                                                                                       */
 /* ----------------------------------------------------------------------------------------------- */
- const static struct wcurve id_tc26_gost_3410_2012_256_paramSetTest = {
+ static const struct wcurve id_tc26_gost_3410_2012_256_paramSetTest = {
   ak_mpzn256_size,
   1,
   { 0xffffffffffffc983LL, 0xffffffffffffffffLL, 0xffffffffffffffffLL, 0x7fffffffffffffffLL }, /* a (в форме Монтгомери) */

@@ -1,11 +1,14 @@
 #define LIBAKRYPT_HAVE_SYSTYPES_H
 
+
 #include "montgomery_curve.h"
 #include "ak_curves.h"
 #include "ak_parameters.h"
+#include "ak_sign.h"
 
 #include <libakrypt.h>
 #include <ak_mpzn.h>
+#include <ak_tools.h>
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -13,6 +16,7 @@
 #include <time.h>
 
 int ak_wpoint_cmp_x(ak_wpoint p1, ak_wpoint p2, ak_wcurve wc);
+int ak_wpoint_cmp(ak_wpoint p1, ak_wpoint p2, ak_wcurve wc);
 
 int main()
 {
@@ -25,6 +29,8 @@ int main()
 
     clock_t start, end;
     double weir_time, mont_time;
+
+
 
     for(int i =0; i <2; ++i){
         if(i){
@@ -43,7 +49,9 @@ int main()
         ak_wpoint_to_mpoint(point2, wc);
         ak_mpoint_to_wpoint(point2, wc);
 
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("Ok!\n"):printf("Fail!\n");
+        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?
+                    printf("Ok!\n"):
+                    printf("Fail!\n");
 
         ///////////////////////////////////////////////////////////////
         printf("\nTest 1: double point (weierstrass & montgomery)\n");
@@ -60,7 +68,9 @@ int main()
         end = clock();
         mont_time = ((double) end - start) / CLOCKS_PER_SEC;
 
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("x(2P)_w = x(2P)_m\n"):printf("x(2P)_w != x(2P)_m\n");
+        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?
+                    printf("x(2P)_w = x(2P)_m\n"):
+                    printf("x(2P)_w != x(2P)_m\n");
         printf("Weierstrass time: %f secs, Montgomery time %f secs\n", weir_time, mont_time);
 
         ///////////////////////////////////////////////////////////////
@@ -82,7 +92,9 @@ int main()
         end = clock();
         mont_time = ((double) end - start) / CLOCKS_PER_SEC;
 
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("x(P+P)_w = x(P+P)_m\n"):printf("x(P+P)_w != x(P+P)_m\n");
+        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?
+                    printf("x(P+P)_w = x(P+P)_m\n"):
+                    printf("x(P+P)_w != x(P+P)_m\n");
         printf("Weierstrass time: %f secs, Montgomery time %f secs\n", weir_time, mont_time);
 
         ///////////////////////////////////////////////////////////////
@@ -100,7 +112,9 @@ int main()
         end = clock();
         mont_time = ((double) end - start) / CLOCKS_PER_SEC;
 
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("x(q*P)_w = x(q*P)_m\n"):printf("x(q*P)_w != x(q*P)_m\n");
+        (ak_wpoint_cmp(point, point2, wc) == ak_true)?
+                    printf("q*P_w = q*P_m\n"):
+                    printf("q*P_w != q*P_m\n");
         printf("Weierstrass time: %f secs, Montgomery time %f secs\n", weir_time, mont_time);
 
         ///////////////////////////////////////////////////////////////
@@ -109,7 +123,9 @@ int main()
         ak_wpoint_set(point2, wc);
 
         ak_wpoint_pow_montgomery(point2, point2, wc->q, wc->size, wc);
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("x(unit)_w = x((q)*P)_m\n"):printf("x(unit)_w != x((q)*P)_m\n");
+        (ak_wpoint_cmp(point, point2, wc) == ak_true)?
+                    printf("unit_w = x((q)*P)_m\n"):
+                    printf("unit_w != x((q)*P)_m\n");
 
         ///////////////////////////////////////////////////////////////
         printf("\nTest 5: point^(q+1) montgomery & point weierstrass)\n");
@@ -121,8 +137,21 @@ int main()
         ak_mpzn_add(k, k, one, wc->size);
 
         ak_wpoint_pow_montgomery(point2, point2, k, wc->size, wc);
-        (ak_wpoint_cmp_x(point, point2, wc) == ak_true)?printf("x(P)_w = x((q+1)*P)_m\n"):printf("x(P)_w != x((q+1)*P)_m\n");
+        ak_wpoint_reduce(point2, wc);
+        (ak_wpoint_cmp(point, point2, wc) == ak_true)?
+                    printf("P_w = (q+1)*P_m\n"):
+                    printf("P_w != (q+1)*P_m\n");
+
     }
+
+    printf("\nSignature test:\n");
+
+    if(ak_signkey_test() == ak_true){
+        printf("Successful test!");
+    } else {
+        printf("Failed test!");
+    }
+
 
     return 0;
 }
@@ -147,4 +176,31 @@ int ak_wpoint_cmp_x(ak_wpoint p1, ak_wpoint p2, ak_wcurve wc)
         return ak_true;
     else
         return ak_false;
+}
+
+int ak_wpoint_cmp(ak_wpoint p1, ak_wpoint p2, ak_wcurve wc)
+{
+    ak_mpzn512 x1z2, x2z1, y1z2, y2z1;
+
+    bool_t p1isinf, p2isinf;
+    p1isinf = ak_mpzn_cmp_ui(p1->z, wc->size, 0);
+    p2isinf = ak_mpzn_cmp_ui(p2->z, wc->size, 0);
+
+    if(p1isinf^p2isinf)
+        return ak_false;
+
+    ak_mpzn_mul_montgomery(x1z2, p1->x, p2->z, wc->p, wc->n, wc->size);
+    ak_mpzn_mul_montgomery(x2z1, p2->x, p1->z, wc->p, wc->n, wc->size);
+
+    ak_mpzn_mul_montgomery(y1z2, p1->y, p2->z, wc->p, wc->n, wc->size);
+    ak_mpzn_mul_montgomery(y2z1, p2->y, p1->z, wc->p, wc->n, wc->size);
+
+    int x_cmp = ak_mpzn_cmp(x1z2, x2z1, wc->size);
+    int y_cmp = ak_mpzn_cmp(y1z2, y2z1, wc->size);
+
+    if((x_cmp == 0) && (y_cmp == 0))
+        return ak_true;
+    else
+        return ak_false;
+
 }
